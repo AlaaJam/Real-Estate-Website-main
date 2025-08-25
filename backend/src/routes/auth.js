@@ -22,7 +22,7 @@ router.get("/ping", (_req, res) => res.json({ auth: "ok" }));
 router.post("/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
-
+    console.log (name, email, password)
     await db.run(
       "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
       [name, email, password]

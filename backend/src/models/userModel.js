@@ -1,20 +1,20 @@
 import db from "../db.js";
 
-export function findUserByEmail(email) {
-  const stmt = db.prepare("SELECT * FROM users WHERE email = ?");
-  return stmt.get(email);
+export async function findUserByEmail(email) {
+  return await db.get("SELECT * FROM users WHERE email = ?", [email]);
 }
 
-export function findUserById(id) {
-  const stmt = db.prepare("SELECT id, name, email, created_at, updated_at FROM users WHERE id = ?");
-  return stmt.get(id);
+export async function findUserById(id) {
+  return await db.get(
+    "SELECT id, name, email, created_at FROM users WHERE id = ?",
+    [id]
+  );
 }
 
-export function createUser({ name, email, password_hash }) {
-  const stmt = db.prepare(`
-    INSERT INTO users (name, email, password_hash)
-    VALUES (?, ?, ?)
-  `);
-  const info = stmt.run(name, email, password_hash);
-  return findUserById(info.lastInsertRowid);
+export async function createUser({ name, email, password_hash }) {
+  const result = await db.run(
+    "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+    [name, email, password_hash]
+  );
+  return await findUserById(result.lastID);
 }

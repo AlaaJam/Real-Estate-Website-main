@@ -13,7 +13,7 @@ app.use(cors({
   origin: "http://localhost:3000",   // frontend URL
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
-}));backend
+}));
 
 app.use(express.json());
 app.use(cookieParser());           // <-- add
@@ -33,5 +33,5 @@ app.get("/api/profile", requireAuth, (req, res) => {
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
-const PORT = process.env.PORT || 5000;
+const PORT = 7542;// process.env.PORT ||
 app.listen(PORT, () => console.log(`API on http://localhost:${PORT}`));

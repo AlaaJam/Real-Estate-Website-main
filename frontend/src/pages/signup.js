@@ -13,8 +13,7 @@ const SignupPage = () => {
 
   const onChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
- 
-  const onSubmit = async (e) => {
+ const onSubmit = async (e) => {
   e.preventDefault();
   setError(null);
 
@@ -24,24 +23,31 @@ const SignupPage = () => {
   }
 
   try {
-const res = await fetch("http://localhost:5000/api/auth/signup", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ name, email, password }),
-});
+    const res = await fetch("http://localhost:7542/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+      }),
+    });
+
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
 
     const data = await res.json();
-    alert(data.message); // ✅ show success or error message
-
+    alert(data.message); // ✅ success / error from backend
   } catch (err) {
     setError(err.message);
   }
 };
 
 
+
+
   return (
     <Fragment>
-      <HeaderContainer bg="false" />
+      <HeaderContainer bg={false} />
       <SignupBlock>
         <SignupBlock.Container>
           <SignupBlock.Content>
