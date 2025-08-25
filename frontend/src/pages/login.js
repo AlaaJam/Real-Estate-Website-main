@@ -3,8 +3,10 @@ import { useDispatch } from "react-redux";
 import { HeaderContainer, FooterContainer } from "../containers";
 import { Login as LoginBlock, Form } from "../components";
 import { login } from "../redux/actions/authActions";
+import { useHistory } from "react-router-dom";   // ✅ v5 uses useHistory
 
 const LoginPage = () => {
+  const history = useHistory();   // ✅ correct hook
   const dispatch = useDispatch();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState(null);
@@ -14,9 +16,21 @@ const LoginPage = () => {
   const onSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+
     try {
-      await dispatch(login(form.email, form.password));
-      // redirect if you want, e.g. history.push("/dashboard")
+      const res = await fetch("http://localhost:7542/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, password: form.password }),
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Login failed");
+
+      alert(data.message);   // ✅ show success
+      history.push("/");     // ✅ redirect to home page
+
     } catch (err) {
       setError(err.message);
     }
@@ -36,12 +50,22 @@ const LoginPage = () => {
               <Form onSubmit={onSubmit}>
                 <Form.FormGroup>
                   <Form.Label>Email</Form.Label>
-                  <Form.Input name="email" value={form.email} onChange={onChange} placeholder="you@example.com" />
+                  <Form.Input
+                    name="email"
+                    value={form.email}
+                    onChange={onChange}
+                    placeholder="you@example.com"
+                  />
                 </Form.FormGroup>
 
                 <Form.FormGroup>
                   <Form.Label>Password</Form.Label>
-                  <Form.Input name="password" type="password" value={form.password} onChange={onChange} />
+                  <Form.Input
+                    name="password"
+                    type="password"
+                    value={form.password}
+                    onChange={onChange}
+                  />
                 </Form.FormGroup>
 
                 {error && <p style={{ color: "crimson" }}>{error}</p>}
@@ -57,7 +81,8 @@ const LoginPage = () => {
                 <LoginBlock.Anchor to="/forgot-password">Forgot Password?</LoginBlock.Anchor>
               </LoginBlock.Text>
               <LoginBlock.Text>
-                Don’t have an account? <LoginBlock.Anchor to="/signup">Sign Up</LoginBlock.Anchor>
+                Don’t have an account?{" "}
+                <LoginBlock.Anchor to="/signup">Sign Up</LoginBlock.Anchor>
               </LoginBlock.Text>
             </LoginBlock.Footer>
           </LoginBlock.Content>
