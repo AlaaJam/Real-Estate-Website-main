@@ -1,11 +1,15 @@
-import React, { useState } from "react";
-
+import React, { useEffect, useState } from "react";
 import { Dashboard } from "../components";
 import { adminurls } from "../constants/routes/adminurls";
 
-const DashboardContainer = ({ title, children }) => {
+const API_BASE = process.env.REACT_APP_API_BASE || ""; // use CRA proxy or env
+
+const DashboardContainer = ({ title, children, role }) => {
   const [show, setShow] = useState(false);
   const [pro, setPro] = useState(true);
+
+  const [user, setUser] = useState(null);
+  const [userErr, setUserErr] = useState(null);
 
   const handleDashboardNavigationOpen = () => {
     setShow(true);
@@ -16,6 +20,29 @@ const DashboardContainer = ({ title, children }) => {
     setShow(false);
     setPro(true);
   };
+
+  // 🔐 Load current user (for the name)
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/users/me`, {
+          method: "GET",
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error("Failed to load user");
+        const data = await res.json();
+        if (isMounted) setUser(data);
+      } catch (e) {
+        if (isMounted) setUserErr(e.message);
+      }
+    })();
+    return () => (isMounted = false);
+  }, []);
+
+  const displayName = user?.name?.trim() || user?.email || "My Account";
+  const roleLabel = role || (user?.role ? user.role : null); // optional
+
   return (
     <Dashboard>
       <Dashboard.Header>
@@ -26,6 +53,7 @@ const DashboardContainer = ({ title, children }) => {
           </Dashboard.Button>
         </Dashboard.SideNav>
       </Dashboard.Header>
+
       <Dashboard.Content>
         <Dashboard.Left show={show} pro={pro}>
           <Dashboard.Close>
@@ -34,23 +62,28 @@ const DashboardContainer = ({ title, children }) => {
               name="fas fa-times"
             />
           </Dashboard.Close>
+
+          {/* LEFT HEADER */}
           <Dashboard.LeftHeader>
-            <Dashboard.Image source="default.jpg" alt="" />
             <Dashboard.Text>
-              Maxine Johnson <Dashboard.Span>(Admin)</Dashboard.Span>
+              Welcome {displayName}{" "}
+              {roleLabel ? <Dashboard.Span>({roleLabel})</Dashboard.Span> : null}
             </Dashboard.Text>
           </Dashboard.LeftHeader>
+
           <Dashboard.LeftContent>
             <Dashboard.List>
-              {adminurls.map((url) => {
-                if (url.subUrl) {
-                  return <LinksWithSubLinks key={url.name} url={url} />;
-                }
-                return <Links url={url.name} url={url} />;
-              })}
+              {adminurls.map((item) =>
+                item.subUrl ? (
+                  <LinksWithSubLinks key={item.name} url={item} />
+                ) : (
+                  <Links key={item.name} url={item} />
+                )
+              )}
             </Dashboard.List>
           </Dashboard.LeftContent>
         </Dashboard.Left>
+
         <Dashboard.Right>
           <Dashboard.RightHeader>
             <Dashboard.Title>{title}</Dashboard.Title>
@@ -62,28 +95,30 @@ const DashboardContainer = ({ title, children }) => {
   );
 };
 
-const LinksWithSubLinks = function ({ url }) {
+const LinksWithSubLinks = ({ url }) => {
   const [subLinksShown, setSublinksShown] = useState(false);
-
-  const handleClick = () => setSublinksShown((prevState) => !prevState);
+  const toggle = () => setSublinksShown((v) => !v);
 
   return (
-    <Dashboard.ListItem onClick={handleClick}>
-      <Dashboard.Anchor to={url.url}>
+    <Dashboard.ListItem>
+      <Dashboard.Anchor to={url.url} onClick={toggle}>
         <Dashboard.Icon name={url.icon} />
         <Dashboard.Text>{url.name}</Dashboard.Text>
-        <Dashboard.SublinkIcon name="fas fa-chevron-down " />
+        <Dashboard.SublinkIcon name="fas fa-chevron-down" />
       </Dashboard.Anchor>
-      <Dashboard.SubList>
-        {url.subUrls.map(
-          (url) => subLinksShown && <Links key={url.name} url={url} />
-        )}
-      </Dashboard.SubList>
+
+      {subLinksShown && (
+        <Dashboard.SubList>
+          {url.subUrls?.map((sub) => (
+            <Links key={sub.name} url={sub} />
+          ))}
+        </Dashboard.SubList>
+      )}
     </Dashboard.ListItem>
   );
 };
 
-const Links = function ({ url, sublinks }) {
+const Links = ({ url }) => {
   return (
     <Dashboard.ListItem>
       <Dashboard.Anchor to={url.url}>

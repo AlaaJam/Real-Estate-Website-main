@@ -16,71 +16,75 @@ export function requireAuth(req, res, next) {
   }
 }
 
-router.get("/ping", (_req, res) => res.json({ auth: "ok" }));
+// (optional) GET /api/auth/me
+router.get("/me", requireAuth, async (req, res) => {
+  const user = await db.get(
+    `SELECT id, name, email, created_at, phone, address1, city, state
+     FROM users WHERE id = ?`,
+    req.user.id
+  );
+  res.json(user);
+});
 
-// Signup route
-router.post("/signup", async (req, res) => {
+// POST /api/auth/signup  (alias /register)
+router.post(["/signup", "/register"], async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password } = req.body || {};
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "name, email, password required" });
+    }
+    const existing = await db.get(`SELECT id FROM users WHERE email = ?`, email);
+    if (existing) return res.status(409).json({ error: "Email already in use" });
 
-    // ✅ hash password before saving
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
-
-    await db.run(
-      "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-      [name, email, passwordHash]
+    const hash = await bcrypt.hash(password, 10);
+    const result = await db.run(
+      `INSERT INTO users (name, email, password) VALUES (?, ?, ?)`,
+      [name, email, hash]
     );
 
-    res.json({ success: true, message: "✅ User stored successfully!" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "❌ Failed to store user" });
+    const payload = { id: result.lastID, email };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "7d" });
+    res.cookie("token", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false, // keep false on localhost
+      maxAge: 7 * 24 * 3600 * 1000,
+    });
+    res.json({ success: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Signup failed" });
   }
 });
 
-
-
-// Login route
+// POST /api/auth/login
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
+    const user = await db.get(`SELECT * FROM users WHERE email = ?`, email);
+    if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
-    // find user by email
-    const user = await db.get("SELECT * FROM users WHERE email = ?", [email]);
-    if (!user) {
-      return res.status(400).json({ success: false, message: "❌ User not found" });
-    }
+    const ok = await bcrypt.compare(password, user.password);
+    if (!ok) return res.status(401).json({ error: "Invalid credentials" });
 
-    // compare password
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) {
-      return res.status(400).json({ success: false, message: "❌ Invalid credentials" });
-    }
-
-    // create token
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET || "dev_secret",
-      { expiresIn: "1h" }
-    );
-
-    // set cookie
-    res.cookie("token", token, { httpOnly: true });
-
-    res.json({ success: true, message: "✅ Login successful", token });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "❌ Login failed" });
+    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    res.cookie("token", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+      maxAge: 7 * 24 * 3600 * 1000,
+    });
+    res.json({ success: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Login failed" });
   }
 });
 
+// POST /api/auth/logout
+router.post("/logout", (_req, res) => {
+  res.clearCookie("token");
+  res.json({ success: true });
+});
 
 export default router;
-
-
-
-
-
-
-

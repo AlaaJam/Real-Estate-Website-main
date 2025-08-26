@@ -38,6 +38,11 @@ export const fetchMe = () => async (dispatch) => {
 
 // Logout
 export const logout = () => async (dispatch) => {
-  await api("/auth/logout", { method: "POST" });
+  try {
+    await api("/auth/logout", { method: "POST" }); // hits backend now
+  } catch (e) {
+    console.warn("Logout API failed:", e.message);
+  }
+  localStorage.removeItem("user");
   dispatch({ type: "AUTH/SET_USER", payload: null });
 };

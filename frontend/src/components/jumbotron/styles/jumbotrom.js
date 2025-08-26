@@ -18,13 +18,16 @@ export const Left = styled.div`
   justify-content: center;
   align-items: center;
   text-align: center;
-  padding: 20px;
+  padding: 10px 20px; /* reduce vertical padding */
   width: 65%;
+  margin-top: -300px;  /* <--- move upward slightly */
+
   @media only screen and (max-width: 768px) {
     width: 100%;
-    margin-top: 60px;
+    margin-top: 20px; /* mobile stays normal */
   }
 `;
+
 
 export const Right = styled.div`
   background-color: rgba(231, 238, 241, 0.39);
@@ -42,11 +45,12 @@ export const Right = styled.div`
 `;
 
 export const Title = styled.h2`
-  color: var(--bs-white);
+  color: #002b7cff; /* Pure white */
   font-size: 3em;
   letter-spacing: 2.5px;
-  text-transform: capitalize;
+
   font-weight: bolder;
+
   @media only screen and (max-width: 768px) {
     letter-spacing: 2px;
   }
@@ -56,10 +60,10 @@ export const Title = styled.h2`
 `;
 
 export const Text = styled.p`
-  color: var(--bs-white);
+  color: #002b7cff; /* Pure white */
   text-align: center;
-  margin-top: -10px;
   font-size: 1.2rem;
   width: 100%;
   margin-top: 4px;
+
 `;

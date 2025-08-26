@@ -1,18 +1,30 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useHistory } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import links from "../constants/routes/nav-links";
 import { HeaderWrapper, Banner, Jumbotron } from "../components";
+import { logout } from "../redux/actions/authActions";
 import SideNavigationContainer from "./SideNavigationContainer";
 
 const HeaderContainer = ({ bg, source }) => {
   const [isSideOpen, setIsSideOpen] = useState(false);
   const [fixed, setFixed] = useState(false);
-  const location = useLocation();
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user")) || null;
+    } catch {
+      return null;
+    }
+  });
 
-  // Handle sticky/fixed header safely
+  const location = useLocation();
+  const history = useHistory();
+  const dispatch = useDispatch();
+
+  // Keep header "fixed" look after scrolling
   useEffect(() => {
     const onScroll = () => setFixed(window.scrollY > 80);
-    onScroll(); // run once on mount
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -22,24 +34,52 @@ const HeaderContainer = ({ bg, source }) => {
     setIsSideOpen(false);
   }, [location.pathname]);
 
-  const toggleSide = useCallback(() => setIsSideOpen(v => !v), []);
+  // Sync user if changed in another tab
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === "user") {
+        try {
+          setUser(e.newValue ? JSON.parse(e.newValue) : null);
+        } catch {
+          setUser(null);
+        }
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
-  return (
-    <Banner bg={bg} source={source}>
-      {/* Accessibility: quick skip */}
-     
+  const toggleSide = useCallback(() => setIsSideOpen((v) => !v), []);
 
-      <HeaderWrapper bg={bg} fixed={false} role="navigation" aria-label="Primary">
-        <HeaderWrapper.Container>
-          <HeaderWrapper.Title bg={bg}>
-            <HeaderWrapper.Link bg={bg} fixed={fixed} to="/">
-              Real Home
-            </HeaderWrapper.Link>
-          </HeaderWrapper.Title>
+  // Logout
+  const handleLogout = async () => {
+    try {
+      await dispatch(logout());
+    } finally {
+      localStorage.removeItem("user");
+      setUser(null);
+      history.push("/login");
+    }
+  };
 
-          <HeaderWrapper.LinksContainer>
-            <HeaderWrapper.List links="links" role="menubar">
-              {links.map(link => (
+  // ---- Reusable header bar (used in both branches) ----
+  const HeaderBar = (
+    <HeaderWrapper bg={bg} fixed={fixed} role="navigation" aria-label="Primary">
+      <HeaderWrapper.Container>
+        <HeaderWrapper.Title bg={bg}>
+          <HeaderWrapper.Link bg={bg} fixed={fixed} to="/">
+            Real Home
+          </HeaderWrapper.Link>
+        </HeaderWrapper.Title>
+
+        <HeaderWrapper.LinksContainer>
+          {/* Main nav (hide Login if user exists) */}
+          <HeaderWrapper.List links="links" role="menubar">
+            {links
+              .filter(
+                (link) => !(user && (link.to === "/login" || /login/i.test(link.name)))
+              )
+              .map((link) => (
                 <HeaderWrapper.Item key={link.to} role="none">
                   <HeaderWrapper.Anchor
                     role="menuitem"
@@ -51,53 +91,87 @@ const HeaderContainer = ({ bg, source }) => {
                   </HeaderWrapper.Anchor>
                 </HeaderWrapper.Item>
               ))}
-            </HeaderWrapper.List>
+          </HeaderWrapper.List>
 
-            <HeaderWrapper.List>
-              <HeaderWrapper.Item>
-                <HeaderWrapper.Anchor to="/profile" special="true">
-                  Profile
+          {/* Right side: user + logout OR login */}
+          <HeaderWrapper.List>
+            <HeaderWrapper.Item>
+              {user ? (
+                <>
+                  <HeaderWrapper.Anchor to="/profile" special="true">
+                    {user.email}
+                  </HeaderWrapper.Anchor>
+                  <HeaderWrapper.Anchor
+                    as="button"
+                    onClick={handleLogout}
+                    style={{ marginLeft: 10 }}
+                  >
+                    Logout
+                  </HeaderWrapper.Anchor>
+                </>
+              ) : (
+                <HeaderWrapper.Anchor to="/login" special="true">
+                  Login
                 </HeaderWrapper.Anchor>
-              </HeaderWrapper.Item>
-            </HeaderWrapper.List>
+              )}
+            </HeaderWrapper.Item>
+          </HeaderWrapper.List>
 
-            <HeaderWrapper.List side="side">
-              <HeaderWrapper.Item>
-                <HeaderWrapper.Button
-                  aria-label="Open menu"
-                  aria-controls="mobile-menu"
-                  aria-expanded={isSideOpen}
-                  onClick={toggleSide}
-                >
-                  <HeaderWrapper.Icon name="fa fa-bars" aria-hidden="true" />
-                </HeaderWrapper.Button>
-              </HeaderWrapper.Item>
-            </HeaderWrapper.List>
-          </HeaderWrapper.LinksContainer>
-        </HeaderWrapper.Container>
-      </HeaderWrapper>
+          {/* Burger menu */}
+          <HeaderWrapper.List side="side">
+            <HeaderWrapper.Item>
+              <HeaderWrapper.Button
+                aria-label="Open menu"
+                aria-controls="mobile-menu"
+                aria-expanded={isSideOpen}
+                onClick={toggleSide}
+              >
+                <HeaderWrapper.Icon name="fa fa-bars" aria-hidden="true" />
+              </HeaderWrapper.Button>
+            </HeaderWrapper.Item>
+          </HeaderWrapper.List>
+        </HeaderWrapper.LinksContainer>
+      </HeaderWrapper.Container>
+    </HeaderWrapper>
+  );
+  // -----------------------------------------------------
 
-      {bg === "true" && (
+  // Home page (bg === "true"): show banner + hero
+  if (bg === "true") {
+    return (
+      <Banner bg={bg} source={source}>
+        {HeaderBar}
+
         <Jumbotron>
           <Jumbotron.Left>
             <Jumbotron.Title>Find the home you deserve</Jumbotron.Title>
             <Jumbotron.Text>
               Browse curated listings and contact trusted agents.
             </Jumbotron.Text>
-            {/* If you want the search later, just uncomment: */}
-            {/* <AdvancedSearchContainer /> */}
           </Jumbotron.Left>
-          <Jumbotron.Right />
         </Jumbotron>
-      )}
 
-      {/* Dim background when side nav is open (click to close) */}
-      {isSideOpen && (
-        <div
-          className="overlay"
-          onClick={toggleSide}
-          aria-hidden="true"
+        {isSideOpen && (
+          <div className="overlay" onClick={toggleSide} aria-hidden="true" />
+        )}
+
+        <SideNavigationContainer
+          sideNavShown={isSideOpen}
+          sideNavHidden={!isSideOpen}
+          setSideNavHidden={(v) => setIsSideOpen(!v)}
+          setSideNavShown={setIsSideOpen}
         />
+      </Banner>
+    );
+  }
+
+  // All other pages: only the header bar (no banner/hero)
+  return (
+    <>
+      {HeaderBar}
+
+      {isSideOpen && (
+        <div className="overlay" onClick={toggleSide} aria-hidden="true" />
       )}
 
       <SideNavigationContainer
@@ -106,7 +180,7 @@ const HeaderContainer = ({ bg, source }) => {
         setSideNavHidden={(v) => setIsSideOpen(!v)}
         setSideNavShown={setIsSideOpen}
       />
-    </Banner>
+    </>
   );
 };
 

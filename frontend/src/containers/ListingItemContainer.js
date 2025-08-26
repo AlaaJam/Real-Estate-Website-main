@@ -19,11 +19,13 @@ const ListingItemContainer = ({ featured, width }) => {
       </Listing.Top>
       <Listing.Bottom>
         <Listing.BottomItem>
+          
           <Listing.Title>
             <Listing.Anchor to={`/property/${featured.id}`}>
               {featured.title}
             </Listing.Anchor>
           </Listing.Title>
+
           <Listing.Price>Ksh {featured.price}</Listing.Price>
           <Listing.Text description>
             {featured.description.substring(0, 100)}
@@ -33,13 +35,9 @@ const ListingItemContainer = ({ featured, width }) => {
               Details
             </Listing.Anchor>
           </Listing.Button>
+          {/* this is handling the space  */}
           <Listing.AgentContainer>
-            <Listing.AgentImageContainer>
-              <Listing.Image
-                src={`/images/agents/${featured.agent.image}`}
-                profile="true"
-              />
-            </Listing.AgentImageContainer>
+           
         
           </Listing.AgentContainer>
         </Listing.BottomItem>

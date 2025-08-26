@@ -1,14 +1,15 @@
 import styled from "styled-components/macro";
 
 export const Main = styled.div`
- position: relative;
 
-  ${({ bg, source }) =>
-    bg &&
-    ` 
-      //  min-height: 100vh;
-       background-image:url('${`${source}`}');
-  `}
+   position: relative;
+  min-height: 70vh;
+  display: grid;
+  place-items: center;
+  background: ${({ source }) =>
+    source
+      ? `url(${source}) center/cover no-repeat`
+      : `linear-gradient(135deg, #e6f0ff 0%, #ffffff 100%)`};
   background-size: cover;
   background-position: center;
   background-repeat: none;

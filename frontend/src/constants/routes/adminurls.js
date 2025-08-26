@@ -48,10 +48,5 @@ export const adminurls = [
     icon: "fas fa-unlock-alt",
     subUrl: false,
   },
-  {
-    url: "#",
-    name: "Logout",
-    icon: "fas fa-sign-out-alt",
-    subUrl: false,
-  },
+
 ];

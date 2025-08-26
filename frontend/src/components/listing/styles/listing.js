@@ -1,6 +1,8 @@
 import styled from "styled-components/macro";
 import { Link } from "react-router-dom";
 
+
+
 export const Container = styled.div`
   width: ${({ width }) => (width ? width : "32%")};
   background-color: var(--bs-white);

@@ -28,8 +28,9 @@ const LoginPage = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Login failed");
 
-      alert(data.message);   // ✅ show success
-      history.push("/");     // ✅ redirect to home page
+      alert(data.message);   
+   localStorage.setItem("user", JSON.stringify(data.user));
+      history.push("/");     
 
     } catch (err) {
       setError(err.message);

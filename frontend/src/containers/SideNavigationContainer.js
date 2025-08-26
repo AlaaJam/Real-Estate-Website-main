@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { SideNavigation } from "../components";
-
 import links from "../constants/routes/nav-links";
 
 const SideNavigationContainer = ({
@@ -9,6 +8,21 @@ const SideNavigationContainer = ({
   sideNavHidden,
   setSideNavHidden,
 }) => {
+  const [user, setUser] = useState(null);
+
+useEffect(() => {
+  const storedUser = localStorage.getItem("user");
+  if (storedUser) {
+    try {
+      setUser(JSON.parse(storedUser));
+    } catch (err) {
+      console.error("Invalid JSON in localStorage:", storedUser);
+      localStorage.removeItem("user"); // cleanup bad value
+    }
+  }
+}, []);
+
+
   return (
     <SideNavigation shown={sideNavShown} hidden={sideNavHidden}>
       <SideNavigation.Container>
@@ -35,11 +49,15 @@ const SideNavigationContainer = ({
                 </SideNavigation.Anchor>
               </SideNavigation.ListItem>
             ))}
-            <SideNavigation.ListItem>
-              <SideNavigation.Anchor to="/add-listing">
-                Profile
-              </SideNavigation.Anchor>
-            </SideNavigation.ListItem>
+
+            {/* ✅ Replace Login with User Name */}
+            {/* <SideNavigation.ListItem>
+              {user ? (
+                <SideNavigation.Text>👤 {user.name}</SideNavigation.Text>
+              ) : (
+                <SideNavigation.Anchor to="/login">Login</SideNavigation.Anchor>
+              )}
+            </SideNavigation.ListItem> */}
           </SideNavigation.List>
         </SideNavigation.Links>
       </SideNavigation.Container>

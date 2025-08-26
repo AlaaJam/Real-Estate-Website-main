@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 export const Header = styled.div`
   width: 100%;
   z-index: 99;
-  position: sticky;
+  position: fixed;
   top:0;
   ${({ bg }) =>
     bg !== "true" &&

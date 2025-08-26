@@ -27,24 +27,7 @@ const FooterContainer = () => {
             </Footer.List>
           </Footer.Item>
           <Footer.Item>
-            <Footer.Subtitle>Quick Links</Footer.Subtitle>
-            <Footer.List>
-              <Footer.ListItem>
-                <Footer.Anchor to="/">Home</Footer.Anchor>
-              </Footer.ListItem>
-              <Footer.ListItem>
-                <Footer.Anchor to="/listing">Properties</Footer.Anchor>
-              </Footer.ListItem>
-              <Footer.ListItem>
-                <Footer.Anchor to="/faqs">FAQs</Footer.Anchor>
-              </Footer.ListItem>
-              <Footer.ListItem>
-                <Footer.Anchor to="/dashboard">Account</Footer.Anchor>
-              </Footer.ListItem>
-              <Footer.ListItem>
-                <Footer.Anchor to="/login">Login</Footer.Anchor>
-              </Footer.ListItem>
-            </Footer.List>
+            
           </Footer.Item>
           <Footer.Item>
             <Footer.Subtitle>Social Links</Footer.Subtitle>
